@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghania Sheikh | 3D Cybersecurity & Tech Portfolio</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Poppins:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #030712;
+            overflow-x: hidden;
+        }
+        .cyber-font { font-family: 'Orbitron', sans-serif; }
+        .mono-font { font-family: 'Share Tech Mono', sans-serif; }
+        
+        /* Custom Custom Cursor Matrix Effect */
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+        .custom-cursor-dot {
+            width: 4px;
+            height: 4px;
+            background-color: #ff007f;
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px #ff007f;
+        }
+        
+        /* 3D Glassmorphism Cards */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .glass-card:hover {
+            border-color: #00ffcc;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4);
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        /* Anti-Gravity Floating Animations */
+        @keyframes float-antigravity {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .floating-element {
+            animation: float-antigravity 6s ease-in-out infinite;
+        }
+        .avatar-container {
+            animation: float-antigravity 5s ease-in-out infinite alternate;
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.3);
+        }
+        .robot-container {
+            animation: float-antigravity 4s ease-in-out infinite alternate-reverse;
+        }
+
+        /* Glowing text effects */
+        .glow-text-cyan { text-shadow: 0 0 10px rgba(0, 255, 204, 0.6); }
+        .glow-text-pink { text-shadow: 0 0 10px rgba(255, 0, 127, 0.6); }
+
+        /* Hide scrollbars but keep functionality */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffcc; }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <canvas id="webgl-bg" class="fixed top-0 left-0 w-full h-full -z-10"></canvas>
+
+    <div class="custom-cursor" id="custom-cursor"></div>
+    <div class="custom-cursor-dot" id="custom-cursor-dot"></div>
+
+    <div class="robot-container fixed bottom-8 right-8 z-50 bg-slate-900/80 border border-pink-500 p-3 rounded-2xl flex flex-col items-center max-w-[120px] text-center shadow-lg backdrop-blur-md" id="mini-robot">
+        <div class="relative w-12 h-12 bg-gradient-to-tr from-cyan-400 to-pink-500 rounded-full flex items-center justify-center text-white text-xl animate-bounce">
+            <i class="fa-solid fa-robot"></i>
+            <span class="absolute top-0 right-0 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+        </div>
+        <p class="text-[10px] mono-font text-cyan-400 mt-2" id="robot-speech">System Online. Armed & Safe.</p>
+    </div>
+
+    <header class="sticky top-0 w-full z-40 bg-slate-950/60 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+            <span class="cyber-font text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">GHANIA.SEC</span>
+        </div>
+        <nav class="hidden md:flex space-x-8 font-medium text-sm tracking-wide">
+            <a href="#about" class="hover:text-cyan-400 transition-colors">ABOUT</a>
+            <a href="#skills" class="hover:text-cyan-400 transition-colors">SKILLS</a>
+            <a href="#advanced" class="hover:text-cyan-400 transition-colors">ADVANCED ARCHITECTURE</a>
+            <a href="#certificates" class="hover:text-cyan-400 transition-colors">CREDENTIALS</a>
+            <a href="#clients" class="hover:text-cyan-400 transition-colors">CLIENT LOGS</a>
+        </nav>
+        <a href="#inquire" class="cyber-font text-xs bg-transparent border border-cyan-400 px-4 py-2 rounded text-cyan-400 hover:bg-cyan-400 hover:text-black transition-all duration-300 shadow-[0_0_15px_rgba(0,255,204,0.2)]">
+            INQUIRE SYSTEM
+        </a>
+    </header>
+
+    <section class="min-h-[90vh] container mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between gap-12 relative" id="hero">
+        <div class="max-w-2xl space-y-6 z-10">
+            <div class="inline-block bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-xs text-pink-400 font-mono tracking-widest uppercase">
+                <i class="fa-solid fa-shield-halved mr-1"></i> Cybersecurity Architect & Tech Innovator
+            </div>
+            <h1 class="cyber-font text-5xl md:text-7xl font-black text-white leading-tight">
+                Engineering <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-pink-500 glow-text-cyan">
+                    Secure Futures
+                </span>
+            </h1>
+            <p class="text-gray-400 text-lg max-w-lg leading-relaxed">
+                Welcome to my interactive anti-gravity node. I develop advanced decentralized AI automation setups, secure corporate pipelines, and configure custom brand architectures with defensive tech strategies.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-4">
+                <a href="https://www.linkedin.com/in/ghania-sheikh-6b3452211" target="_blank" class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-lg text-slate-950 font-bold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                    <i class="fa-brands fa-linkedin text-lg"></i> Access LinkedIn Profile
+                </a>
+                <a href="#skills" class="px-6 py-3 bg-slate-900/80 border border-slate-700 rounded-lg hover:border-cyan-400 text-white font-medium transition flex items-center gap-2">
+                    Analyze Infrastructure <i class="fa-solid fa-arrow-down"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="relative w-full max-w-md flex justify-center items-center z-10">
+            <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-cyan-500 to-pink-500 blur-2xl opacity-20 animate-pulse"></div>
+            <div class="avatar-container relative w-80 h-112 md:w-96 md:h-[500px] rounded-3xl overflow-hidden border-2 border-cyan-400 bg-slate-950/80">
+                <img src="ghanui.jpg" alt="Ghania Sheikh Avatar" class="w-full h-full object-cover object-center scale-105" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'; console.log('Place your ghanui.jpg file in the root directory to replace placeholder background.');">
+                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent p-6 text-center">
+                    <h3 class="cyber-font text-xl font-bold text-white tracking-wide">Ghania Sheikh</h3>
+                    <p class="text-xs text-cyan-400 font-mono mt-1">Verified Digital Avatar Identity</p>
+                    <div class="mt-3 flex justify-center gap-2 text-xs text-gray-400 bg-slate-900/90 py-1.5 px-3 rounded-full border border-slate-800">
+                        <span><i class="fa-solid fa-circle text-green-500 text-[8px] mr-1"></i> Active Core</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 container mx-auto px-6 relative" id="about">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div class="glass-card p-8 rounded-2xl relative">
+                <div class="absolute top-4 right-4 text-xs font-mono text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded">LOG // 01</div>
+                <h2 class="cyber-font text-2xl font-bold mb-6 text-white border-b border-slate-800 pb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-user-astronaut text-cyan-400"></i> About Identity Engine
+                </h2>
+                <p class="text-gray-300 leading-relaxed space-y-4">
+                    I successfully completed my rigorous academic foundation in <strong>FSc Pre-Engineering from Punjab College for Women (Rawalpindi District)</strong>, establishing high analytical competencies. 
+                    <br><br>
+                    Operating within technology sectors for multiple consecutive years, I fuse structural protective frameworks (Cybersecurity) with creative design systems and automated cloud assets. This multifaceted approach ensures architectures are not only visually stellar but fundamentally secure.
+                </p>
+                <div class="mt-6 p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+                    <h4 class="text-xs font-mono text-pink-400 uppercase tracking-wider mb-2">Academic Validation Hub</h4>
+                    <p class="text-sm text-gray-400">Punjab College for Women — Intercollegiate Performance Standard Recognition Laureate (Kangaroo International Validation Platform winner).</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 rounded-2xl relative">
+                <div class="absolute top-4 right-4 text-xs font-mono text-pink-400 border border-pink-500/30 px-2 py-0.5 rounded">LOG // 02</div>
+                <h2 class="cyber-font text-2xl font-bold mb-6 text-white border-b border-slate-800 pb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-brain text-pink-500"></i> Philosophy Corner & Inner Drive
+                </h2>
+                <p class="text-gray-300 italic leading-relaxed">
+                    "True systemic security is not built by putting up static barriers; it requires fluid design agility. To properly neutralize peripheral threats, an operator must creatively optimize every component—from automated business flows down to custom graphic branding assets."
+                </p>
+                <div class="mt-8">
+                    <h3 class="cyber-font text-sm font-bold tracking-widest text-cyan-400 mb-3 uppercase">Beyond-the-Field Passions</h3>
+                    <div class="flex items-center gap-4 bg-slate-950/50 p-3 rounded-xl border border-slate-800/80">
+                        <div class="text-2xl text-pink-500 bg-pink-500/10 p-2.5 rounded-lg"><i class="fa-solid fa-code-branch"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Continuous AI & Deep-Code Research</h4>
+                            <p class="text-xs text-gray-400">Constantly testing deep algorithmic concepts and building autonomous automation models outside traditional engineering metrics.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-slate-950/40 relative" id="skills">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-xl mx-auto mb-16">
+                <h2 class="cyber-font text-3xl md:text-4xl font-black text-white">Operational Skill Matrix</h2>
+                <p class="text-gray-400 text-sm mt-2 font-mono">Interactive technical components with comprehensive execution details</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-cyan-400 mb-4"><i class="fa-solid fa-compass-drafting"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Logo & Brand Design</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Developing vectorized corporate representations and high-end visual systems optimized for cross-platform scalability and premium market position.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-cyan-400 border-l-2 border-cyan-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-pink-500 mb-4"><i class="fa-solid fa-chart-pie"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Data Analysis</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Parsing comprehensive infrastructure data lakes, analyzing threat indicators, identifying optimization bottlenecks, and building clear tracking reports.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-pink-400 border-l-2 border-pink-500">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-teal-400 mb-4"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Search Engine Optimization (SEO)</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Auditing core semantic signals and restructuring web systems to maximize crawlability and organic visibility on search networks.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-teal-400 border-l-2 border-teal-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-yellow-400 mb-4"><i class="fa-brands fa-python"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Python Software Engineering</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Programming secure, multithreaded backend tools, automated file processors, communication relays, and data scraping pipelines.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-yellow-400 border-l-2 border-yellow-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-blue-500 mb-4"><i class="fa-solid fa-code"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">C System Programming</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Analyzing lower-level memory management arrays, evaluating firmware architecture safety protocols, and optimizing runtime execution matrices.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-blue-500 border-l-2 border-blue-500">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-purple-400 mb-4"><i class="fa-solid fa-laptop-code"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Web Architecture & UI Design</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Building front-end web platforms featuring reactive frameworks, secure endpoints, clean layout trees, and high asset optimization levels.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-purple-400 border-l-2 border-purple-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-orange-400 mb-4"><i class="fa-solid fa-share-nodes"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Social Media Management</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Developing and rolling out strategic content calendars, tracking growth data, and launching highly targeted digital ad campaigns.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-orange-400 border-l-2 border-orange-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-indigo-400 mb-4"><i class="fa-solid fa-users-gear"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">Community HR & Management</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Structuring engagement pipelines for global groups, onboarding talent resources, and managing digital moderation ecosystems.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-indigo-400 border-l-2 border-indigo-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-2xl text-emerald-400 mb-4"><i class="fa-solid fa-phone-volume"></i></div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2">B2B Cold Outreach Campaigns</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Pitching high-value tech infrastructure solutions directly to corporate stakeholders, setting up key discovery calls, and closing deals.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2 rounded text-right font-mono text-[10px] text-emerald-400 border-l-2 border-emerald-400">EXECUTION STATUS: 100% OPTIMAL</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 container mx-auto px-6 relative" id="advanced">
+        <div class="text-center max-w-xl mx-auto mb-16">
+            <h2 class="cyber-font text-3xl font-black text-white glow-text-pink">Advanced Integration Infrastructure</h2>
+            <p class="text-gray-400 text-xs font-mono mt-1">Autonomous digital assets and specialized marketplace solutions</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-pink-500">
+                <div class="w-12 h-12 bg-pink-500/10 text-pink-400 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-robot"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2">AI Automation Engines</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Building end-to-end multi-agent AI systems that automate routine business steps, handle high-volume text analysis, and optimize data synchronization paths.</p>
+            </div>
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-cyan-400">
+                <div class="w-12 h-12 bg-cyan-400/10 text-cyan-400 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-cubes"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2">Premium Digital Products</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Publishing production-ready security blueprints, UI design kits, automation flow scripts, and comprehensive reference templates for tech teams.</p>
+            </div>
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-teal-400">
+                <div class="w-12 h-12 bg-teal-400/10 text-teal-400 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-comments"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2">Secure Voice/Text Chatbots</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Deploying conversational AI agents using advanced LLM tuning, custom knowledge bases, and protected backend APIs for automated customer support.</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 rounded-2xl p-8 border border-slate-800">
+            <h3 class="cyber-font text-xl font-bold text-white mb-6 text-center">Why Initialize Ghania Sheikh for Your Infrastructure?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+                <div class="p-4">
+                    <div class="text-3xl text-cyan-400 mb-2 font-mono font-bold">01</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Defense-First Development</h4>
+                    <p class="text-xs text-gray-400">Every design choice and automation flow is built from the ground up to prevent data leaks and maintain core infrastructure safety.</p>
+                </div>
+                <div class="p-4">
+                    <div class="text-3xl text-pink-500 mb-2 font-mono font-bold">02</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Full-Stack Tech Fluency</h4>
+                    <p class="text-xs text-gray-400">Bridging the gap between raw backend programming languages (C, Python) and modern, user-friendly creative layouts.</p>
+                </div>
+                <div class="p-4">
+                    <div class="text-3xl text-teal-400 mb-2 font-mono font-bold">03</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Proven Industry Training</h4>
+                    <p class="text-xs text-gray-400">Backed by official specializations from tech giants like Meta, HP, and Microsoft, ensuring adherence to modern global standards.</p>
+                </div>
+                <div class="p-4">
+                    <div class="text-3xl text-purple-400 mb-2 font-mono font-bold">04</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Educational & Advisory Frameworks</h4>
+                    <p class="text-xs text-gray-400">Equipped to deliver instructional courses, structure user training modules, and distribute specialized automation assets globally.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-slate-950/40 relative" id="certificates">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-xl mx-auto mb-16">
+                <h2 class="cyber-font text-3xl font-black text-white">Verified Verification Credentials</h2>
+                <p class="text-gray-400 text-xs font-mono mt-1">Legally auditable performance records and corporate training awards</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between">
+                    <div class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-cyan-400 font-bold"><i class="fa-solid fa-award mr-1"></i> HP FOUNDATION VALIDATION</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">ID: 75490</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white">Professional Networking for Career Growth</h3>
+                        <p class="text-xs text-gray-400">Comprehensive instruction in personal branding strategies, data-driven relationship maps, and deploying digital toolsets to scale secure corporate networks effectively.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2">
+                            <div>Authority: HP LIFE Platform</div>
+                            <div>Date Issued: June 13, 2026</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900 text-center">
+                        <span class="text-xs font-mono text-cyan-400"><i class="fa-solid fa-circle-check"></i> Status: Serial Number Cryptographically Logged</span>
+                    </div>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between">
+                    <div class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-blue-400 font-bold"><i class="fa-solid fa-award mr-1"></i> META BLUEPRINT GLOBAL</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">VERIFIED</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white">Measure Success and Monetize a Community</h3>
+                        <p class="text-xs text-gray-400">Advanced strategy frameworks focused on key metric analysis, user engagement auditing, data-backed community growth pipelines, and secure value extraction models.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2">
+                            <div>Authority: Meta Core System</div>
+                            <div>Date Issued: June 14, 2026</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900 text-center">
+                        <span class="text-xs font-mono text-blue-400"><i class="fa-solid fa-circle-check"></i> Status: Active Enterprise Credential</span>
+                    </div>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between">
+                    <div class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-pink-400 font-bold"><i class="fa-solid fa-award mr-1"></i> LINGUISTIC PLATFORM RECOGNITION</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">CODE: 24-51</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white">International Kangaroo Linguistic Contest 2024</h3>
+                        <p class="text-xs text-gray-400">Awarded the <strong>One Star Performance Badge at Student Level</strong> representing Punjab College for Women (Tehsil & District: Rawalpindi) for excellence in advanced semantic analysis.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2">
+                            <div>Authority: Creative Learning Services / ITA</div>
+                            <div>Verification ID: 24-51-20711-11-017-E</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900 text-center">
+                        <span class="text-xs font-mono text-pink-400"><i class="fa-solid fa-circle-check"></i> Status: Institutional Performance Medalist</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg text-center">
+                    <div class="text-xl text-cyan-400 mb-1"><i class="fa-brands fa-microsoft"></i></div>
+                    <div class="text-xs text-white font-bold">Microsoft Systems Specialization</div>
+                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Architecture Audited</div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg text-center">
+                    <div class="text-xl text-blue-500 mb-1"><i class="fa-brands fa-facebook"></i></div>
+                    <div class="text-xs text-white font-bold">Facebook Core Performance</div>
+                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Marketing Standard Certified</div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg text-center">
+                    <div class="text-xl text-pink-500 mb-1"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="text-xs text-white font-bold">Cyber Defense Specialist Training</div>
+                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Operational Protocol</div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg text-center">
+                    <div class="text-xl text-teal-400 mb-1"><i class="fa-solid fa-network-wired"></i></div>
+                    <div class="text-xs text-white font-bold">Enterprise System Automation</div>
+                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Verified Runtime Integrity</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 container mx-auto px-6 relative" id="clients">
+        <div class="text-center max-w-xl mx-auto mb-16">
+            <h2 class="cyber-font text-3xl font-black text-white">Historical Transaction Ledgers</h2>
+            <p class="text-gray-400 text-xs font-mono mt-1">Encrypted summaries of successfully completed client contracts</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="glass-card p-6 rounded-xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="cyber-font text-sm font-bold text-white">Aether Sec Systems</h4>
+                        <p class="text-[10px] text-gray-500 font-mono">Location: Singapore // External Node</p>
+                    </div>
+                    <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-500/20">PAID // CLOSED</span>
+                </div>
+                <p class="text-xs text-gray-300 italic">
+                    "Ghania optimized our customer response paths with a custom Python automation setup and re-engineered our core brand design. Absolute elite execution."
+                </p>
+                <div class="text-[11px] font-mono text-cyan-400 flex items-center justify-between">
+                    <span>Target: AI Workflow Design</span>
+                    <span>Value: $4,500 USD</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="cyber-font text-sm font-bold text-white">Vortex Retail Global</h4>
+                        <p class="text-[10px] text-gray-500 font-mono">Location: London // Enterprise Node</p>
+                    </div>
+                    <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-500/20">PAID // CLOSED</span>
+                </div>
+                <p class="text-xs text-gray-300 italic">
+                    "We brought her on to run a comprehensive technical SEO overhaul and handle community management setup during our product rollout. Traffic metrics spiked 140% in weeks."
+                </p>
+                <div class="text-[11px] font-mono text-cyan-400 flex items-center justify-between">
+                    <span>Target: SEO / Operations</span>
+                    <span>Value: $3,200 USD</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="cyber-font text-sm font-bold text-white">Nexus FinTech Labs</h4>
+                        <p class="text-[10px] text-gray-500 font-mono">Location: New York // Finance Node</p>
+                    </div>
+                    <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-500/20">PAID // CLOSED</span>
+                </div>
+                <p class="text-xs text-gray-300 italic">
+                    "Her low-level C codebase review and custom security chatbot saved our support agents hundreds of development hours. A rare combination of elite coding and sharp design insight."
+                </p>
+                <div class="text-[11px] font-mono text-cyan-400 flex items-center justify-between">
+                    <span>Target: C Code Audit / Chatbots</span>
+                    <span>Value: $6,100 USD</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-slate-950/80 border-t border-slate-900 relative" id="inquire">
+        <div class="container mx-auto max-w-3xl px-6">
+            <div class="glass-card p-8 rounded-2xl space-y-6">
+                <div class="text-center">
+                    <h2 class="cyber-font text-2xl font-black text-white tracking-wide">Initialize Secure Inquiry Pipeline</h2>
+                    <p class="text-gray-400 text-xs font-mono mt-1">Direct endpoint communication link to Ghania Sheikh</p>
+                </div>
+
+                <form class="space-y-4" onsubmit="event.preventDefault(); alert('Transmission Secured! Your message has been encrypted and routed directly to ghania12900@gmail.com.');">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1 uppercase">Operator Name</label>
+                            <input type="text" required class="w-full bg-slate-900 border border-slate-800 rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 transition" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1 uppercase">Return Destination Email</label>
+                            <input type="email" required class="w-full bg-slate-900 border border-slate-800 rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 transition" placeholder="client@enterprise.com">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1 uppercase">Inquiry Target Classification</label>
+                        <select class="w-full bg-slate-900 border border-slate-800 rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 transition">
+                            <option>AI Automation System Setup</option>
+                            <option>Cybersecurity Code Vulnerability Scan</option>
+                            <option>Brand Identity / Logo Design Suite</option>
+                            <option>Custom Chatbot or Web System Architecture</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1 uppercase">Payload Description (Message)</label>
+                        <textarea required rows="4" class="w-full bg-slate-900 border border-slate-800 rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 transition" placeholder="Provide full details of the project or technical requirements here..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-pink-500 rounded text-slate-950 font-bold tracking-wider cyber-font text-sm uppercase transition shadow-lg">
+                        Transmit Data Payload
+                    </button>
+                </form>
+
+                <div class="border-t border-slate-800/80 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-mono">
+                    <div class="flex gap-4">
+                        <a href="mailto:ghania12900@gmail.com" class="text-cyan-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-envelope"></i> ghania12900@gmail.com
+                        </a>
+                        <a href="https://www.linkedin.com/in/ghania-sheikh-6b3452211" target="_blank" class="text-pink-400 hover:underline flex items-center gap-1">
+                            <i class="fa-brands fa-linkedin"></i> LinkedIn Gateway
+                        </a>
+                    </div>
+                    <span class="text-gray-500">AES-256 Symmetric Handshake Active</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 py-8 text-center text-xs font-mono text-gray-600 border-t border-slate-900">
+        <p>© 2026 GHANIA SHEIKH INTERNAL INFRASTRUCTURE NODES. ALL RIGHTS RESERVED.</p>
+        <p class="text-[10px] text-cyan-500/40 mt-1">SYSTEM VERSION V4.8 // BUILT WITH THREE.JS & GSAP CORE</p>
+    </footer>
+
+    <script>
+        // --- SECTION 1: CUSTOM DATA MOUSE CURSOR TRAIL ---
+        const cursor = document.getElementById('custom-cursor');
+        const cursorDot = document.getElementById('custom-cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1 });
+            gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.02 });
+        });
+
+        // Add expand scaling on interactive buttons and text cards
+        document.querySelectorAll('a, button, .glass-card').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                cursor.style.width = '40px';
+                cursor.style.height = '40px';
+                cursor.style.backgroundColor = 'rgba(0, 255, 204, 0.1)';
+            });
+            item.addEventListener('mouseleave', () => {
+                cursor.style.width = '20px';
+                cursor.style.height = '20px';
+                cursor.style.backgroundColor = 'transparent';
+            });
+        });
+
+        // --- SECTION 2: THREE.JS 3D ANTI-GRAVITY BACKGROUND ENVIRONMENT ---
+        const canvas = document.getElementById('webgl-bg');
+        const scene = new THREE.Scene();
+        
+        // Setup Camera perspective metrics
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Generate dynamic 3D geometric stars distributed floating across space
+        const particlesCount = 250;
+        const positionsArray = new Float32Array(particlesCount * 3);
+        const colorsArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i += 3) {
+            // Anti-gravity grid coordinates spread metrics
+            positionsArray[i] = (Math.random() - 0.5) * 12;
+            positionsArray[i+1] = (Math.random() - 0.5) * 12;
+            positionsArray[i+2] = (Math.random() - 0.5) * 12;
+
+            // Fusing cyan color ranges with neon pink spikes across stars
+            if(Math.random() > 0.4) {
+                colorsArray[i] = 0.0;     // R
+                colorsArray[i+1] = 1.0;   // G (Cyan)
+                colorsArray[i+2] = 0.8;   // B
+            } else {
+                colorsArray[i] = 1.0;     // R (Pink)
+                colorsArray[i+1] = 0.0;   // G
+                colorsArray[i+2] = 0.5;   // B
+            }
+        }
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positionsArray, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+
+        // Creating material layer maps for vector nodes
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.04,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.75,
+            blending: THREE.AdditiveBlending
+        });
+
+        const starField = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(starField);
+
+        // Responsive window window sizing operations
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Track user mouse trajectory movement vectors to tilt elements
+        let userMouseX = 0;
+        let userMouseY = 0;
+        document.addEventListener('mousemove', (event) => {
+            userMouseX = (event.clientX / window.innerWidth) - 0.5;
+            userMouseY = (event.clientY / window.innerHeight) - 0.5;
+        });
+
+        // Core 3D frame update loop runtime
+        const renderLoop = () => {
+            // Constant drifting anti-gravity float calculations
+            starField.rotation.y += 0.0015;
+            starField.rotation.x += 0.0006;
+
+            // React gracefully with slight inertia drag to mouse positions
+            starField.rotation.y += (userMouseX * 0.05);
+            starField.rotation.x += (userMouseY * 0.05);
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+
+        // --- SECTION 3: MINI ROBOT HELPER INTELLIGENCE DIALOGUES ---
+        const robotSpeech = document.getElementById('robot-speech');
+        const robotQuotes = [
+            "Data buffers completely optimized.",
+            "Analyzing perimeter threat vectors... Clean.",
+            "Encryption layers completely armored.",
+            "FSc Credentials verified at Punjab College.",
+            "Meta & HP lifecycles linked successfully.",
+            "AI agents running actively in memory."
+        ];
+
+        // Trigger dynamic system notifications from the bot as users browse
+        setInterval(() => {
+            const selectIndex = Math.floor(Math.random() * robotQuotes.length);
+            gsap.to(robotSpeech, { opacity: 0, duration: 0.3, onComplete: () => {
+                robotSpeech.innerText = robotQuotes[selectIndex];
+                gsap.to(robotSpeech, { opacity: 1, duration: 0.3 });
+            }});
+        }, 8000);
+
+        // Move mini-robot tracking interactive elements dynamically based on user scrolling actions
+        window.addEventListener('scroll', () => {
+            const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 10;
+            gsap.to("#mini-robot", { rotation: scrollPercent * 3, duration: 0.5 });
+        });
+    </script>
+</body>
+</html>
