@@ -3,359 +3,1094 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ghania Sheikh | Tech & Cyber Portfolio</title>
+    <title>Ghania Sheikh | Immersive 3D Cybersecurity Portfolio</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Poppins:wght@300;400;600&display=swap');
+        
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #020617;
+            overflow-x: hidden;
         }
-        .font-mono {
-            font-family: 'Fira Code', monospace;
+        .cyber-font { font-family: 'Orbitron', sans-serif; }
+        .mono-font { font-family: 'Share Tech Mono', sans-serif; }
+        
+        /* Custom Tracking Cursor Matrix */
+        .custom-cursor {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 0 15px #00ffcc;
         }
-        /* Custom glow effects */
-        .neon-glow-cyan {
-            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.3);
+        .custom-cursor-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #ff007f;
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px #ff007f;
         }
-        .neon-border {
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+        
+        /* Dynamic Glassmorphism Perspective Layouts */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 204, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 0, 127, 0.4);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.25);
+        }
+        
+        /* Continuous Oscillating Floating Movements */
+        @keyframes float-slow {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(1.5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .avatar-container {
+            animation: float-slow 5s ease-in-out infinite alternate;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
+        }
+        .drone-float {
+            animation: float-slow 3.5s ease-in-out infinite alternate-reverse;
+        }
+
+        .glow-text-cyan { text-shadow: 0 0 12px rgba(0, 255, 204, 0.5); }
+        .glow-text-pink { text-shadow: 0 0 12px rgba(255, 0, 127, 0.5); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffcc; }
+
+        /* HUD Scanner Line Animation overlay */
+        .scanner-line {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ff007f, transparent);
+            position: absolute;
+            animation: scan 3.5s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Subtle text distortion for headings on hover */
+        .glitch-hover:hover {
+            animation: glitch-text 0.3s linear infinite;
+        }
+        @keyframes glitch-text {
+            0% { text-shadow: 1px 1px #ff007f, -1px -1px #00ffcc; }
+            50% { text-shadow: -1px 2px #ff007f, 2px -1px #00ffcc; }
+            100% { text-shadow: 2px -1px #ff007f, -2px 1px #00ffcc; }
         }
     </style>
 </head>
-<body class="text-slate-100 overflow-x-hidden min-h-screen relative selection:bg-cyan-500 selection:text-slate-950">
+<body class="text-gray-200 antialiased overflow-x-hidden">
 
-    <canvas id="particleCanvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+    <!-- Interactive Three.js Background Stage -->
+    <canvas id="webgl-bg" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
 
-    <header class="fixed top-0 w-full bg-slate-950/60 backdrop-blur-md border-b border-slate-800/80 z-50 transition-all duration-300">
-        <nav class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="font-mono text-cyan-400 font-bold tracking-wider text-lg animate-pulse">
-                G_SHEIKH //
-            </div>
-            <div class="flex gap-6 font-mono text-sm">
-                <a href="#home" class="hover:text-cyan-400 transition-colors">HOME</a>
-                <a href="#about" class="hover:text-cyan-400 transition-colors">ABOUT</a>
-                <a href="#projects" class="hover:text-cyan-400 transition-colors">PROJECTS</a>
-            </div>
+    <!-- Custom Physical Mouse Tracking Pointers -->
+    <div class="custom-cursor hidden lg:block" id="custom-cursor"></div>
+    <div class="custom-cursor-dot hidden lg:block" id="custom-cursor-dot"></div>
+
+    <!-- Active Pop-Up Notification Toast Stack Hub -->
+    <div id="notification-hub" class="fixed bottom-6 left-6 z-50 flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+    <!-- Dynamic Security Drone Assistant Component -->
+    <div class="drone-float fixed bottom-8 right-8 z-50 bg-slate-900/95 border border-cyan-400/80 p-4 rounded-2xl flex flex-col items-center max-w-[150px] text-center shadow-2xl backdrop-blur-md cursor-pointer group transition-all duration-300 hover:border-pink-500" id="mini-robot" onclick="interactRobot()">
+        <div class="relative w-12 h-12 bg-gradient-to-tr from-cyan-400 to-indigo-600 rounded-full flex items-center justify-center text-slate-950 text-xl shadow-[0_0_15px_rgba(0,255,204,0.4)] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+            <i class="fa-solid fa-shield-halved text-white" id="drone-icon"></i>
+            <span class="absolute top-0 right-0 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span>
+            </span>
+        </div>
+        <p class="text-[10px] mono-font text-cyan-400 mt-2 select-none uppercase tracking-wider" id="robot-speech">DRONE: ACTIVE</p>
+        <span class="text-[8px] text-gray-500 block uppercase tracking-widest mt-1 group-hover:text-pink-400 transition-colors">QUERY NODE</span>
+    </div>
+
+    <!-- Main Navigation Interface Header -->
+    <header class="sticky top-0 w-full z-40 bg-slate-950/75 backdrop-blur-lg border-b border-slate-900/60 px-6 py-4 flex justify-between items-center transition-all duration-300" id="main-header">
+        <div class="flex items-center space-x-2 cursor-pointer group" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+            <div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#00ffcc] group-hover:bg-pink-500 group-hover:shadow-[0_0_10px_#ff007f] transition-all"></div>
+            <span class="cyber-font text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-pink-500 group-hover:opacity-80 transition-opacity">GHANIA.SEC</span>
+        </div>
+        <nav class="hidden lg:flex space-x-8 font-medium text-xs tracking-widest font-mono">
+            <a href="#about" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">ABOUT<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
+            <a href="#skills" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">SKILLS<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
+            <a href="#advanced" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">ARCHITECTURE<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
+            <a href="#hobbies" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">HOBBIES<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
+            <a href="#certificates" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">CREDENTIALS<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
+            <a href="#clients" class="hover:text-cyan-400 transition-colors relative py-1 group uppercase">LOGS<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></span></a>
         </nav>
+        <a href="#inquire" id="nav-inquire-btn" class="cyber-font text-xs bg-transparent border border-cyan-400 px-4 py-2 rounded text-cyan-400 hover:bg-cyan-400 hover:text-black hover:scale-105 transition-all duration-300 shadow-[0_0_15px_rgba(0,255,204,0.15)]">
+            INQUIRE SYSTEM
+        </a>
     </header>
 
-    <main class="relative z-10 space-y-24">
+    <!-- Hero Framework Stage -->
+    <section class="min-h-[90vh] container mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between gap-12 relative" id="hero">
+        <div class="max-w-2xl space-y-6 z-10 hero-reveal opacity-0">
+            <div class="inline-block bg-slate-900/90 border border-slate-800 px-4 py-1.5 rounded-full text-xs text-pink-400 font-mono tracking-widest uppercase shadow-sm">
+                <i class="fa-solid fa-shield-halved mr-1 animate-pulse"></i> Cybersecurity Architect & Tech Innovator
+            </div>
+            <h1 class="cyber-font text-5xl md:text-7xl font-black text-white leading-tight glitch-hover cursor-default">
+                Architecting <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-pink-500 glow-text-cyan">
+                    Secure Futures
+                </span>
+            </h1>
+            <p class="text-gray-400 text-base md:text-lg max-w-lg leading-relaxed">
+                Welcome to my interactive anti-gravity node. I develop advanced decentralized AI automation setups, secure corporate pipelines, and configure custom brand architectures with defensive tech strategies.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-4">
+                <a href="https://www.linkedin.com/in/ghania-sheikh-6b3452211" target="_blank" class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-lg text-slate-950 font-bold hover:shadow-[0_0_25px_rgba(0,255,204,0.5)] hover:scale-[1.02] transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-brands fa-linkedin text-lg"></i> Access LinkedIn Profile
+                </a>
+                <a href="#skills" class="px-6 py-3 bg-slate-900/80 border border-slate-800 rounded-lg hover:border-cyan-400 hover:bg-slate-900 text-white font-medium transition-all duration-300 flex items-center gap-2 group">
+                    Analyze Infrastructure <i class="fa-solid fa-arrow-down group-hover:translate-y-1 transition-transform"></i>
+                </a>
+            </div>
+        </div>
 
-        <section id="home" class="min-h-screen flex flex-col justify-center items-center text-center px-6 relative pt-16">
-            <div class="hero-elements opacity-0 space-y-6 max-w-3xl">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-400 font-mono text-xs uppercase tracking-widest">
-                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> Mainframe Active
+        <!-- Interactive 3D Holographic Image Frame -->
+        <div class="relative w-full max-w-md flex justify-center items-center z-10 hero-reveal opacity-0">
+            <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-cyan-500 to-pink-500 blur-3xl opacity-25 animate-pulse"></div>
+            <div class="avatar-container relative w-80 h-112 md:w-96 md:h-[500px] rounded-3xl overflow-hidden border-2 border-cyan-400 bg-slate-950/90 group cursor-crosshair tilt-card">
+                <div class="scanner-line"></div>
+                <img src="ghanui.jpg" alt="Ghania Sheikh Avatar" class="w-full h-full object-cover object-center scale-105 transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';">
+                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent p-6 text-center transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <h3 class="cyber-font text-xl font-bold text-white tracking-wide">Ghania Sheikh</h3>
+                    <p class="text-xs text-cyan-400 font-mono mt-1">Verified Digital Avatar Identity</p>
+                    <div class="mt-3 inline-flex items-center gap-2 text-xs text-gray-400 bg-slate-900/90 py-1.5 px-4 rounded-full border border-slate-800/80 shadow-md">
+                        <span><i class="fa-solid fa-circle text-green-500 text-[8px] animate-ping mr-1"></i> Active Core Connection</span>
+                    </div>
                 </div>
-                
-                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight">
-                    Securing the <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 neon-glow-cyan">Digital Frontier</span>
-                </h1>
-                
-                <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-sans">
-                    Welcome to my operational interface. I engineer sleek frontend systems and analyze security architectures.
-                </p>
+            </div>
+        </div>
+    </section>
 
-                <div class="pt-4 flex gap-4 justify-center">
-                    <a href="#about" class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-mono font-bold rounded-lg shadow-lg hover:shadow-cyan-500/20 transform hover:-translate-y-0.5 transition-all">
-                        INITIALIZE_OVERVIEW
-                    </a>
-                    <a href="#projects" class="px-6 py-3 bg-slate-900 border border-slate-700 font-mono text-slate-300 rounded-lg hover:border-cyan-500/50 transition-all">
-                        VIEW_DATA_SETS
-                    </a>
+    <!-- Structural Identity Core Section -->
+    <section class="py-24 container mx-auto px-6 relative" id="about">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start scroll-reveal opacity-0">
+            <div class="glass-card p-8 rounded-2xl relative group tilt-card">
+                <div class="absolute top-4 right-4 text-xs font-mono text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded">LOG // 01</div>
+                <h2 class="cyber-font text-2xl font-bold mb-6 text-white border-b border-slate-800 pb-3 flex items-center gap-2 group-hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-user-astronaut text-cyan-400"></i> About Identity Engine
+                </h2>
+                <p class="text-gray-300 leading-relaxed text-sm md:text-base">
+                    I am currently pursuing my rigorous academic foundation in <strong>ICS (Intermediate in Computer Science) at Punjab College for Women (Rawalpindi District)</strong>, establishing high analytical and computational competencies. 
+                    <br><br>
+                    Operating within technology sectors for multiple consecutive years, I fuse structural protective frameworks (Cybersecurity) with creative design systems and automated cloud assets. This multifaceted approach ensures architectures are not only visually stellar but fundamentally secure.
+                </p>
+                <div class="mt-6 p-4 bg-slate-950/80 rounded-xl border border-slate-800/80 group-hover:border-cyan-500/30 transition-colors">
+                    <h4 class="text-xs font-mono text-pink-400 uppercase tracking-wider mb-2">Academic Validation Hub</h4>
+                    <p class="text-xs text-gray-400">Punjab College for Women — Intercollegiate Performance Standard Recognition Laureate (Kangaroo International Validation Platform winner).</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 rounded-2xl relative group tilt-card">
+                <div class="absolute top-4 right-4 text-xs font-mono text-pink-400 border border-pink-500/30 px-2 py-0.5 rounded">LOG // 02</div>
+                <h2 class="cyber-font text-2xl font-bold mb-6 text-white border-b border-slate-800 pb-3 flex items-center gap-2 group-hover:text-pink-400 transition-colors">
+                    <i class="fa-solid fa-brain text-pink-500"></i> Philosophy Corner & Inner Drive
+                </h2>
+                <p class="text-gray-300 italic leading-relaxed text-sm md:text-base">
+                    "True systemic security is not built by putting up static barriers; it requires fluid design agility. To properly neutralize peripheral threats, an operator must creatively optimize every component—from automated business flows down to custom graphic branding assets."
+                </p>
+                <div class="mt-8">
+                    <h3 class="cyber-font text-xs font-bold tracking-widest text-cyan-400 mb-3 uppercase">Core Methodology</h3>
+                    <div class="flex items-center gap-4 bg-slate-950/70 p-4 rounded-xl border border-slate-800 group-hover:border-pink-500/30 transition-colors">
+                        <div class="text-2xl text-pink-500 bg-pink-500/10 p-3 rounded-lg"><i class="fa-solid fa-code-branch"></i></div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Continuous AI & Deep-Code Research</h4>
+                            <p class="text-xs text-gray-400">Constantly testing deep algorithmic concepts and building autonomous automation models outside traditional computing metrics.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operational Skill Matrix Grid Pipeline -->
+    <section class="py-24 bg-slate-950/40 relative border-y border-slate-900/80" id="skills">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-xl mx-auto mb-16 scroll-reveal opacity-0">
+                <h2 class="cyber-font text-3xl md:text-4xl font-black text-white glitch-hover">Operational Skill Matrix</h2>
+                <p class="text-gray-400 text-xs font-mono mt-2 uppercase tracking-widest">Select skill modules to initiate telemetry stream verification</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 setup-stagger opacity-0" id="skills-grid">
+                <!-- Skill Node 1 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Logo & Brand Design', 95)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-cyan-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-compass-drafting"></i></div>
+                            <span class="text-[10px] font-mono bg-cyan-950/80 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800/40">NODE 01</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-cyan-400">Logo & Brand Design</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Developing vectorized corporate representations and high-end visual systems optimized for cross-platform scalability and premium market position.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-cyan-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-cyan-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 2 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Data Analysis', 92)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-pink-500 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-chart-pie"></i></div>
+                            <span class="text-[10px] font-mono bg-pink-950/80 text-pink-400 px-2 py-0.5 rounded border border-pink-800/40">NODE 02</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-pink-400">Data Analysis</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Parsing comprehensive infrastructure data lakes, analyzing threat indicators, identifying optimization bottlenecks, and building clear tracking reports.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-pink-500 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-pink-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 3 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('SEO Systems', 88)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-teal-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                            <span class="text-[10px] font-mono bg-teal-950/80 text-teal-400 px-2 py-0.5 rounded border border-teal-800/40">NODE 03</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-teal-400">Search Engine Optimization (SEO)</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Auditing core semantic signals and restructuring web systems to maximize crawlability and organic visibility on search networks.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-teal-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-teal-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 4 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Python Systems', 94)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-yellow-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-brands fa-python"></i></div>
+                            <span class="text-[10px] font-mono bg-yellow-950/80 text-yellow-400 px-2 py-0.5 rounded border border-yellow-800/40">NODE 04</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-yellow-400">Python Software Engineering</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Programming secure, multithreaded backend tools, automated file processors, communication relays, and data scraping pipelines.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-yellow-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-yellow-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 5 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('C Architecture', 85)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-blue-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-code"></i></div>
+                            <span class="text-[10px] font-mono bg-blue-950/80 text-blue-400 px-2 py-0.5 rounded border border-blue-800/40">NODE 05</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-blue-400">C System Programming</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Analyzing lower-level memory management arrays, evaluating firmware architecture safety protocols, and optimizing runtime execution matrices.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-blue-500 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-blue-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 6 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Web Frameworks', 91)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-purple-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-laptop-code"></i></div>
+                            <span class="text-[10px] font-mono bg-purple-950/80 text-purple-400 px-2 py-0.5 rounded border border-purple-800/40">NODE 06</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-purple-400">Web Architecture & UI Design</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Building front-end web platforms featuring reactive frameworks, secure endpoints, clean layout trees, and high asset optimization levels.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-purple-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-purple-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 7 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Social Strategy', 90)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-orange-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-share-nodes"></i></div>
+                            <span class="text-[10px] font-mono bg-orange-950/80 text-orange-400 px-2 py-0.5 rounded border border-orange-800/40">NODE 07</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-orange-400">Social Media Management</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Developing and rolling out strategic content calendars, tracking growth data, and launching highly targeted digital ad campaigns.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-orange-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-orange-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 8 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('Community Operations', 89)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-indigo-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-users-gear"></i></div>
+                            <span class="text-[10px] font-mono bg-indigo-950/80 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800/40">NODE 08</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-indigo-400">Community HR & Management</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Structuring engagement pipelines for global groups, onboarding talent resources, and managing digital moderation ecosystems.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-indigo-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-indigo-400 font-bold">100% OPTIMAL</span>
+                    </div>
+                </div>
+
+                <!-- Skill Node 9 -->
+                <div class="glass-card p-6 rounded-xl flex flex-col justify-between cursor-pointer group tilt-card" onclick="triggerSkillDiagnostic('B2B Pipeline', 93)">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div class="text-2xl text-emerald-400 mb-4 group-hover:rotate-12 transition-transform duration-300"><i class="fa-solid fa-phone-volume"></i></div>
+                            <span class="text-[10px] font-mono bg-emerald-950/80 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800/40">NODE 09</span>
+                        </div>
+                        <h3 class="cyber-font text-lg font-bold text-white mb-2 transition-colors group-hover:text-emerald-400">B2B Cold Outreach Campaigns</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Pitching high-value tech infrastructure solutions directly to corporate stakeholders, setting up key discovery calls, and closing deals.</p>
+                    </div>
+                    <div class="mt-6 bg-slate-950/80 p-2.5 rounded flex justify-between items-center font-mono text-[10px] border-l-2 border-emerald-400 group-hover:bg-slate-900 transition-colors">
+                        <span class="text-gray-400">INTEGRITY MATRIX:</span>
+                        <span class="text-emerald-400 font-bold">100% OPTIMAL</span>
+                    </div>
                 </div>
             </div>
             
-            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce text-slate-500">
-                <i class="fa-solid fa-angle-down text-2xl"></i>
+            <!-- Dynamic Diagnostic Pop-up Interface Terminal Window -->
+            <div id="diagnostic-terminal" class="mt-10 max-w-3xl mx-auto p-5 bg-slate-950/95 border border-cyan-400/60 rounded-xl font-mono text-xs text-cyan-400 shadow-2xl hidden transform translate-y-4 transition-all duration-300">
+                <div class="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-3">
+                    <span class="flex items-center gap-2 tracking-wider"><i class="fa-solid fa-terminal text-pink-500 animate-pulse"></i> LIVE DIAGNOSTICS STREAM DETECTED</span>
+                    <button class="text-gray-500 hover:text-white text-lg font-bold px-1 transition-colors" onclick="closeTerminal()">×</button>
+                </div>
+                <div id="diagnostic-stdout" class="space-y-1.5 py-1 text-gray-300 max-h-48 overflow-y-auto"></div>
             </div>
-        </section>
+        </div>
+    </section>
 
+    <!-- Advanced Architectural Framework Layers -->
+    <section class="py-24 container mx-auto px-6 relative" id="advanced">
+        <div class="text-center max-w-xl mx-auto mb-16 scroll-reveal opacity-0">
+            <h2 class="cyber-font text-3xl font-black text-white glow-text-pink">Advanced Integration Infrastructure</h2>
+            <p class="text-gray-400 text-xs font-mono mt-1 uppercase tracking-wider">Autonomous digital assets and specialized marketplace solutions</p>
+        </div>
 
-        <section id="about" class="min-h-screen flex items-center justify-center relative px-6 py-20">
-            <div class="about-card max-w-4xl w-full bg-slate-900/80 border border-cyan-500/20 rounded-2xl p-8 md:p-12 shadow-[0_0_35px_rgba(6,182,212,0.05)] relative opacity-0 transform translate-y-12">
-                <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400 rounded-tl-2xl"></div>
-                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-400 rounded-br-2xl"></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 scroll-reveal opacity-0">
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-pink-500 group tilt-card">
+                <div class="w-12 h-12 bg-pink-500/10 text-pink-400 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-pink-500 group-hover:text-black transition-all duration-300 shadow-sm"><i class="fa-solid fa-robot"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2 group-hover:text-pink-400 transition-colors">AI Automation Engines</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Building end-to-end multi-agent AI systems that automate routine business steps, handle high-volume text analysis, and optimize data synchronization paths.</p>
+            </div>
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-cyan-400 group tilt-card">
+                <div class="w-12 h-12 bg-cyan-400/10 text-cyan-400 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-cyan-400 group-hover:text-black transition-all duration-300 shadow-sm"><i class="fa-solid fa-cubes"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">Premium Digital Products</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Publishing production-ready security blueprints, UI design kits, automation flow scripts, and comprehensive reference templates for tech teams.</p>
+            </div>
+            <div class="glass-card p-6 rounded-xl border-t-4 border-t-teal-400 group tilt-card">
+                <div class="w-12 h-12 bg-teal-400/10 text-teal-400 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-teal-400 group-hover:text-black transition-all duration-300 shadow-sm"><i class="fa-solid fa-comments"></i></div>
+                <h3 class="cyber-font text-lg font-bold text-white mb-2 group-hover:text-teal-400 transition-colors">Secure Voice/Text Chatbots</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">Deploying conversational AI agents using advanced LLM tuning, custom knowledge bases, and protected backend APIs for automated customer support.</p>
+            </div>
+        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-                    <div class="flex justify-center">
-                        <div class="relative group">
-                            <div class="absolute -inset-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-700 animate-pulse"></div>
-                            <img src="ghanui.jpg" alt="Ghania Sheikh" class="relative w-44 h-44 rounded-full object-cover border-2 border-cyan-400/60 shadow-2xl">
-                        </div>
+        <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 rounded-2xl p-8 border border-slate-900/60 scroll-reveal opacity-0 shadow-xl">
+            <h3 class="cyber-font text-xl font-bold text-white mb-6 text-center">Why Initialize Ghania Sheikh for Your Infrastructure?</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="p-4 bg-slate-900/20 rounded-xl border border-slate-800/40 hover:border-cyan-500/40 transition-all duration-300 hover:bg-slate-900/40">
+                    <div class="text-3xl text-cyan-400 mb-2 font-mono font-bold">01</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Defense-First Development</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Every design choice and automation flow is built from the ground up to prevent data leaks and maintain core infrastructure safety.</p>
+                </div>
+                <div class="p-4 bg-slate-900/20 rounded-xl border border-slate-800/40 hover:border-pink-500/40 transition-all duration-300 hover:bg-slate-900/40">
+                    <div class="text-3xl text-pink-500 mb-2 font-mono font-bold">02</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Full-Stack Tech Fluency</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Bridging the gap between raw backend programming languages (C, Python) and modern, user-friendly creative layouts.</p>
+                </div>
+                <div class="p-4 bg-slate-900/20 rounded-xl border border-slate-800/40 hover:border-teal-500/40 transition-all duration-300 hover:bg-slate-900/40">
+                    <div class="text-3xl text-teal-400 mb-2 font-mono font-bold">03</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Proven Industry Training</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Backed by official specializations from tech giants like Meta, HP, and Microsoft, ensuring adherence to modern global standards.</p>
+                </div>
+                <div class="p-4 bg-slate-900/20 rounded-xl border border-slate-800/40 hover:border-purple-500/40 transition-all duration-300 hover:bg-slate-900/40">
+                    <div class="text-3xl text-purple-400 mb-2 font-mono font-bold">04</div>
+                    <h4 class="text-white font-bold text-sm mb-1">Educational Frameworks</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Equipped to deliver instructional courses, structure user training modules, and distribute specialized automation assets globally.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specialized Interactive Personal Hobbies Node -->
+    <section class="py-24 bg-slate-950/20 relative border-t border-slate-900/40" id="hobbies">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-xl mx-auto mb-16 scroll-reveal opacity-0">
+                <h2 class="cyber-font text-3xl font-black text-white">Extracurricular Core Interests</h2>
+                <p class="text-gray-400 text-xs font-mono mt-1 uppercase tracking-widest">Hover parameters to skew vector fields; Click to deploy sandbox simulations</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 scroll-reveal opacity-0">
+                <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer tilt-card" onclick="toggleHobbyDetail('ai')">
+                    <div class="absolute -right-6 -bottom-6 text-7xl text-slate-900/40 font-black group-hover:scale-125 transition-transform duration-500"><i class="fa-solid fa-microchip"></i></div>
+                    <h3 class="cyber-font text-lg font-bold text-cyan-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-sm text-pink-500 animate-spin"></i> Deep Algorithmic Tuning
+                    </h3>
+                    <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                        Investigating autonomous localized neural arrays, fine-tuning lightweight models, and engineering custom prompt injection counter-strategies.
+                    </p>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-tighter block group-hover:text-white transition-colors uppercase">&gt; TRIGGER RUNTIME INJECTION</span>
+                    <div class="w-full h-1 bg-slate-800 mt-3 rounded overflow-hidden">
+                        <div class="h-full bg-cyan-400 w-full transition-all duration-700 origin-left scale-x-75 group-hover:scale-x-100"></div>
                     </div>
+                </div>
 
-                    <div class="md:col-span-2 space-y-6">
-                        <h2 class="text-3xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tracking-wider">
-                            SYSTEM_OVERVIEW // ABOUT_ME
-                        </h2>
-                        
-                        <p class="text-slate-300 font-sans leading-relaxed text-md md:text-lg">
-                            Hello! I'm <span class="text-cyan-400 font-semibold">Ghania Sheikh</span>, an aspiring technology and cybersecurity specialist. I focus on deploying highly secure, dynamic frontend systems and auditing architecture baselines. 
-                        </p>
+                <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer tilt-card" onclick="toggleHobbyDetail('design')">
+                    <div class="absolute -right-6 -bottom-6 text-7xl text-slate-900/40 font-black group-hover:scale-125 transition-transform duration-500"><i class="fa-solid fa-palette"></i></div>
+                    <h3 class="cyber-font text-lg font-bold text-pink-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bezier-curve text-sm text-cyan-400"></i> Vector-Scale Engineering
+                    </h3>
+                    <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                        Crafting modular digital artwork blueprints, advanced abstract vectors, and high-fidelity mockups using mathematical mesh layouts.
+                    </p>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-tighter block group-hover:text-white transition-colors uppercase">&gt; RENDER MATHEMATICAL MESH</span>
+                    <div class="w-full h-1 bg-slate-800 mt-3 rounded overflow-hidden">
+                        <div class="h-full bg-pink-500 w-full transition-all duration-700 origin-left scale-x-90 group-hover:scale-x-100"></div>
+                    </div>
+                </div>
 
-                        <div class="education-badge bg-slate-950/70 border border-slate-800/80 rounded-xl p-5 flex items-start gap-4 hover:border-cyan-500/30 transition-all duration-300">
-                            <div class="p-3 bg-cyan-950/60 rounded-lg border border-cyan-500/30 text-cyan-400 shadow-inner">
-                                <i class="fas fa-graduation-cap text-2xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-xs uppercase tracking-widest text-slate-500 font-mono mb-0.5">Academic Track</h4>
-                                <p class="text-white font-semibold text-lg font-sans">FSc in Computer Science (ICS)</p>
-                                <p class="text-sm text-cyan-400/80 font-mono">Focusing on Core Software Foundations & Systems Architecture</p>
-                            </div>
-                        </div>
+                <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer tilt-card" onclick="toggleHobbyDetail('sec')">
+                    <div class="absolute -right-6 -bottom-6 text-7xl text-slate-900/40 font-black group-hover:scale-125 transition-transform duration-500"><i class="fa-solid fa-terminal"></i></div>
+                    <h3 class="cyber-font text-lg font-bold text-teal-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-mask text-sm text-yellow-400"></i> Threat Penetration Labs
+                    </h3>
+                    <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                        Analyzing basic network package distributions, deciphering simple defensive puzzles, and studying sandboxed penetration topologies.
+                    </p>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-tighter block group-hover:text-white transition-colors uppercase">&gt; INITIALIZE PORT SCAN SIM</span>
+                    <div class="w-full h-1 bg-slate-800 mt-3 rounded overflow-hidden">
+                        <div class="h-full bg-teal-400 w-full transition-all duration-700 origin-left scale-x-60 group-hover:scale-x-100"></div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-
-        <section id="projects" class="min-h-screen max-w-7xl mx-auto px-6 py-20 flex flex-col justify-center">
-            <div class="space-y-4 mb-12 text-center md:text-left">
-                <h2 class="text-3xl md:text-4xl font-bold font-mono text-cyan-400 tracking-wide">SECURE_REPOSITORIES</h2>
-                <p class="text-slate-400 font-sans max-w-md">Click on any secure data module below to query deeper credentials and system telemetry.</p>
+    <!-- Auditable Educational & Corporate Credentials Section -->
+    <section class="py-24 bg-slate-950/40 relative border-t border-slate-900/80" id="certificates">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-xl mx-auto mb-16 scroll-reveal opacity-0">
+                <h2 class="cyber-font text-3xl font-black text-white">Verified Verification Credentials</h2>
+                <p class="text-gray-400 text-xs font-mono mt-1 uppercase tracking-widest">Legally auditable performance records and corporate training awards</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 scroll-reveal opacity-0">
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between group hover:border-cyan-400 transition-colors duration-300 tilt-card">
+                    <div class="p-4 bg-slate-900/80 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-cyan-400 font-bold"><i class="fa-solid fa-award mr-1 animate-pulse"></i> HP FOUNDATION VALIDATION</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">ID: 75490</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Professional Networking for Career Growth</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">Comprehensive instruction in personal branding strategies, data-driven relationship maps, and deploying digital toolsets to scale secure corporate networks effectively.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2 border-t border-slate-900/60">
+                            <div>Authority: HP LIFE Platform</div>
+                            <div>Date Issued: June 13, 2026</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900/80 text-center text-xs font-mono text-cyan-400">
+                        <i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> Cryptographically Validated
+                    </div>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between group hover:border-blue-400 transition-colors duration-300 tilt-card">
+                    <div class="p-4 bg-slate-900/80 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-blue-400 font-bold"><i class="fa-solid fa-award mr-1 animate-pulse"></i> META BLUEPRINT GLOBAL</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">VERIFIED</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white group-hover:text-blue-400 transition-colors">Measure Success and Monetize a Community</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">Advanced strategy frameworks focused on key metric analysis, user engagement auditing, data-backed community growth pipelines, and secure value extraction models.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2 border-t border-slate-900/60">
+                            <div>Authority: Meta Core System</div>
+                            <div>Date Issued: June 14, 2026</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900/80 text-center text-xs font-mono text-blue-400">
+                        <i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> Active Enterprise Credential
+                    </div>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-xl bg-slate-950 flex flex-col justify-between group hover:border-pink-500 transition-colors duration-300 tilt-card">
+                    <div class="p-4 bg-slate-900/80 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono text-pink-400 font-bold"><i class="fa-solid fa-award mr-1 animate-pulse"></i> LINGUISTIC PLATFORM RECOGNITION</span>
+                        <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-gray-400 font-mono">CODE: 24-51</span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="cyber-font text-base font-bold text-white group-hover:text-pink-500 transition-colors">International Kangaroo Linguistic Contest 2024</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">Awarded the <strong>One Star Performance Badge at Student Level</strong> representing Punjab College for Women (Tehsil & District: Rawalpindi) for excellence in advanced semantic analysis.</p>
+                        <div class="text-[11px] text-slate-400 font-mono pt-2 border-t border-slate-900/60">
+                            <div>Authority: Creative Learning Services / ITA</div>
+                            <div>Verification ID: 24-51-20711-11-017-E</div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-900/60 border-t border-slate-900/80 text-center text-xs font-mono text-pink-400">
+                        <i class="fa-solid fa-star mr-1 text-yellow-400"></i> Institutional Performance Medalist
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 scroll-reveal opacity-0">
+                <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-lg text-center hover:border-cyan-500/30 hover:bg-slate-900/60 transition-all duration-300">
+                    <div class="text-xl text-cyan-400 mb-1"><i class="fa-brands fa-microsoft"></i></div>
+                    <div class="text-xs text-white font-bold">Microsoft Specialization</div>
+                    <div class="text-[9px] text-gray-500 font-mono mt-0.5 uppercase">Architecture Audited</div>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-lg text-center hover:border-blue-500/30 hover:bg-slate-900/60 transition-all duration-300">
+                    <div class="text-xl text-blue-500 mb-1"><i class="fa-brands fa-facebook"></i></div>
+                    <div class="text-xs text-white font-bold">Facebook Core Performance</div>
+                    <div class="text-[9px] text-gray-500 font-mono mt-0.5 uppercase">Standard Certified</div>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-lg text-center hover:border-pink-500/30 hover:bg-slate-900/60 transition-all duration-300">
+                    <div class="text-xl text-pink-500 mb-1"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="text-xs text-white font-bold">Cyber Defense Specialist</div>
+                    <div class="text-[9px] text-gray-500 font-mono mt-0.5 uppercase">Operational Protocol</div>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-lg text-center hover:border-teal-500/30 hover:bg-slate-900/60 transition-all duration-300">
+                    <div class="text-xl text-teal-400 mb-1"><i class="fa-solid fa-network-wired"></i></div>
+                    <div class="text-xs text-white font-bold">Enterprise Automation</div>
+                    <div class="text-[9px] text-gray-500 font-mono mt-0.5 uppercase">Runtime Integrity</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Inquire System Terminal -->
+    <section class="py-24 container mx-auto px-6 relative" id="inquire">
+        <div class="text-center max-w-xl mx-auto mb-12 scroll-reveal opacity-0">
+            <h2 class="cyber-font text-3xl font-black text-white glow-text-cyan">Inquire System Interface</h2>
+            <p class="text-gray-400 text-xs font-mono mt-1 uppercase tracking-widest">Transmit infrastructure queries directly to the terminal hub</p>
+        </div>
+        
+        <div class="max-w-3xl mx-auto glass-card rounded-2xl overflow-hidden scroll-reveal opacity-0 border border-cyan-400/30 shadow-2xl">
+            <div class="bg-slate-950 px-4 py-3 border-b border-slate-900/80 flex justify-between items-center font-mono text-xs text-gray-400">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                    <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span class="pl-2 text-cyan-400 text-[11px]"><i class="fa-solid fa-terminal mr-1 animate-pulse"></i> SECURE_COMM_RELAY.EXE</span>
+                </div>
+                <span class="text-[10px] opacity-70">ENCRYPTION: AES-256</span>
+            </div>
+            
+            <form id="terminal-form" class="p-6 space-y-6 bg-slate-950/80 font-mono text-sm text-cyan-400" onsubmit="handleInquirySubmission(event)">
+                <div class="space-y-1">
+                    <label class="block text-xs uppercase tracking-wider text-gray-400">&gt; Operator Identity (Your Name):</label>
+                    <input type="text" required id="inquire-name" class="w-full bg-slate-900/50 border border-slate-800 rounded px-4 py-2.5 text-white focus:outline-none focus:border-cyan-400 focus:bg-slate-900/80 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs uppercase tracking-wider text-gray-400">&gt; Return Endpoint Relay (Your Email):</label>
+                    <input type="email" required id="inquire-email" class="w-full bg-slate-900/50 border border-slate-800 rounded px-4 py-2.5 text-white focus:outline-none focus:border-cyan-400 focus:bg-slate-900/80 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs uppercase tracking-wider text-gray-400">&gt; Query Payload (Message Content):</label>
+                    <textarea required id="inquire-message" rows="4" class="w-full bg-slate-900/50 border border-slate-800 rounded px-4 py-2.5 text-white focus:outline-none focus:border-cyan-400 focus:bg-slate-900/80 transition-all" placeholder="Input parameters or consultation requirements..."></textarea>
+                </div>
                 
-                <div onclick="openPopup('popup-cyber')" class="project-card group bg-slate-900/60 border border-slate-800 rounded-xl p-6 hover:border-cyan-500/40 hover:bg-slate-900/90 transform hover:-translate-y-1 transition-all duration-300 cursor-pointer opacity-0 shadow-lg">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="text-cyan-400 text-3xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-shield-halved"></i></div>
-                        <span class="font-mono text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded border border-slate-800">MODULE_01</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-cyan-300 transition-colors font-mono">Cyber Security Core</h3>
-                    <p class="text-slate-400 text-sm line-clamp-2">Threat detection models, identity management configurations, and structural asset security validation protocols.</p>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center gap-2 text-xs font-mono text-cyan-400/70">
-                        <span>Click to expand</span> <i class="fa-solid fa-arrow-right text-[10px] animate-pulse"></i>
-                    </div>
+                <div class="flex justify-between items-center pt-2">
+                    <div class="text-[11px] text-slate-500 hidden sm:block uppercase tracking-wider" id="form-status-msg">READY FOR PACKET TRANSMISSION</div>
+                    <button type="submit" class="cyber-font text-xs bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded hover:bg-transparent hover:text-cyan-400 border border-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,255,204,0.25)] uppercase tracking-widest hover:scale-105">
+                        EXECUTE TRANSMIT
+                    </button>
                 </div>
+            </form>
+            
+            <!-- Real-Time Packet Log Output Node -->
+            <div id="terminal-output" class="hidden p-6 bg-slate-950 font-mono text-xs text-green-400 border-t border-slate-900 max-h-48 overflow-y-auto"></div>
+        </div>
+    </section>
 
-                <div onclick="openPopup('popup-frontend')" class="project-card group bg-slate-900/60 border border-slate-800 rounded-xl p-6 hover:border-cyan-500/40 hover:bg-slate-900/90 transform hover:-translate-y-1 transition-all duration-300 cursor-pointer opacity-0 shadow-lg">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="text-blue-400 text-3xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-code"></i></div>
-                        <span class="font-mono text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded border border-slate-800">MODULE_02</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-blue-300 transition-colors font-mono">Advanced Interfaces</h3>
-                    <p class="text-slate-400 text-sm line-clamp-2">High-performance reactive frontends utilizing Tailwind layout systems, canvas wrappers, and custom runtime scripts.</p>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center gap-2 text-xs font-mono text-blue-400/70">
-                        <span>Click to expand</span> <i class="fa-solid fa-arrow-right text-[10px] animate-pulse"></i>
-                    </div>
+    <!-- Historic Ledger Logging System -->
+    <section class="py-16 container mx-auto px-6 relative" id="clients">
+        <div class="text-center max-w-xl mx-auto mb-10 scroll-reveal opacity-0">
+            <h2 class="cyber-font text-2xl font-black text-white glitch-hover">Historical Transaction Ledgers</h2>
+            <p class="text-gray-400 text-xs font-mono mt-1 uppercase tracking-wider">Encrypted summaries of successfully completed client contracts</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto font-mono text-xs scroll-reveal opacity-0">
+            <div class="p-4 bg-slate-950/80 border border-slate-900 rounded-xl hover:border-cyan-500/40 transition-all duration-300 flex justify-between items-center group cursor-default">
+                <div>
+                    <span class="text-cyan-400">[NODE_LOG_092]</span> Corporate Automation Interface Setup
                 </div>
-
-                <div onclick="openPopup('popup-ics')" class="project-card group bg-slate-900/60 border border-slate-800 rounded-xl p-6 hover:border-cyan-500/40 hover:bg-slate-900/90 transform hover:-translate-y-1 transition-all duration-300 cursor-pointer opacity-0 shadow-lg">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="text-indigo-400 text-3xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-microchip"></i></div>
-                        <span class="font-mono text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded border border-slate-800">MODULE_03</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-indigo-300 transition-colors font-mono">ICS Infrastructure</h3>
-                    <p class="text-slate-400 text-sm line-clamp-2">Practical logic tracks from FSc Computer Science training covering structured software architectures and computational theory.</p>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center gap-2 text-xs font-mono text-indigo-400/70">
-                        <span>Click to expand</span> <i class="fa-solid fa-arrow-right text-[10px] animate-pulse"></i>
-                    </div>
-                </div>
-
+                <span class="text-green-400 font-bold group-hover:scale-105 transition-transform"><i class="fa-solid fa-circle-check text-[10px] mr-1 animate-pulse"></i> SUCCESS</span>
             </div>
-        </section>
-    </main>
+            <div class="p-4 bg-slate-950/80 border border-slate-900 rounded-xl hover:border-pink-500/40 transition-all duration-300 flex justify-between items-center group cursor-default">
+                <div>
+                    <span class="text-pink-500">[NODE_LOG_093]</span> Operational Perimeter Security Audit
+                </div>
+                <span class="text-green-400 font-bold group-hover:scale-105 transition-transform"><i class="fa-solid fa-circle-check text-[10px] mr-1 animate-pulse"></i> SUCCESS</span>
+            </div>
+        </div>
+    </section>
 
-    <footer class="border-t border-slate-900 bg-slate-950 py-8 text-center font-mono text-xs text-slate-500 relative z-10">
-        &copy; 2026 GHANIA SHEIKH. ALL SYSTEMS OPERATIONAL.
+    <!-- Secure Footer Layer Matrix -->
+    <footer class="py-8 bg-slate-950 border-t border-slate-900/60 text-center font-mono text-[11px] text-gray-500">
+        <div class="container mx-auto px-6 space-y-2">
+            <p>&copy; 2026 GHANIA SHEIKH. ALL ARCHITECTURAL RIGHTS RETAINED.</p>
+            <p class="text-slate-600">SYSTEM RUNTIME: SECURITY MODULE V4.5 // POWERED BY THREE.JS, GSAP & TAILWIND</p>
+        </div>
     </footer>
 
-
-    <div id="popup-cyber" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onclick="closePopup('popup-cyber')"></div>
-        <div class="modal-content bg-slate-900 border border-cyan-500/40 rounded-xl p-6 md:p-8 max-w-lg w-full relative z-10 transform scale-90 transition-transform duration-300 shadow-[0_0_50px_rgba(6,182,212,0.2)]">
-            <button onclick="closePopup('popup-cyber')" class="absolute top-4 right-4 text-slate-400 hover:text-white font-mono text-sm">&times; CLOSE</button>
-            <h4 class="text-cyan-400 font-mono text-xs uppercase tracking-widest mb-1">Telemetry Diagnostics</h4>
-            <h3 class="text-2xl font-bold mb-4 text-white font-mono border-b border-slate-800 pb-2">Cyber Security Focus</h3>
-            <p class="text-slate-300 text-sm leading-relaxed space-y-2">
-                This matrix tracking details specific competencies built during independent analysis phases. Core operational domains include tracing systemic system structural endpoints, understanding security frameworks, and optimizing network isolation configurations.
-            </p>
-            <div class="mt-6 flex flex-wrap gap-2">
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-cyan-400">Threat Modeling</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-cyan-400">Asset Audits</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-cyan-400">Defensive Baselines</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="popup-frontend" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onclick="closePopup('popup-frontend')"></div>
-        <div class="modal-content bg-slate-900 border border-blue-500/40 rounded-xl p-6 md:p-8 max-w-lg w-full relative z-10 transform scale-90 transition-transform duration-300 shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-            <button onclick="closePopup('popup-frontend')" class="absolute top-4 right-4 text-slate-400 hover:text-white font-mono text-sm">&times; CLOSE</button>
-            <h4 class="text-blue-400 font-mono text-xs uppercase tracking-widest mb-1">Telemetry Diagnostics</h4>
-            <h3 class="text-2xl font-bold mb-4 text-white font-mono border-b border-slate-800 pb-2">Advanced Frontend UI</h3>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Focused on deploying efficient client-side software structures. This architecture relies entirely on procedural JS engines, modular component distributions via responsive utility frameworks, and reactive viewport optimizations to display raw telemetry instantly.
-            </p>
-            <div class="mt-6 flex flex-wrap gap-2">
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-blue-400">GSAP Core</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-blue-400">Tailwind Engine</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-blue-400">HTML5 Canvas</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="popup-ics" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onclick="closePopup('popup-ics')"></div>
-        <div class="modal-content bg-slate-900 border border-indigo-500/40 rounded-xl p-6 md:p-8 max-w-lg w-full relative z-10 transform scale-90 transition-transform duration-300 shadow-[0_0_50px_rgba(99,102,241,0.2)]">
-            <button onclick="closePopup('popup-ics')" class="absolute top-4 right-4 text-slate-400 hover:text-white font-mono text-sm">&times; CLOSE</button>
-            <h4 class="text-indigo-400 font-mono text-xs uppercase tracking-widest mb-1">Telemetry Diagnostics</h4>
-            <h3 class="text-2xl font-bold mb-4 text-white font-mono border-b border-slate-800 pb-2">FSc ICS Foundation</h3>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Establishes standard baseline engineering practices derived through Intermediate in Computer Science curriculum validation. Emphasizes foundational systemic logic tracks, procedural computational routines, structured data flows, and base network layouts.
-            </p>
-            <div class="mt-6 flex flex-wrap gap-2">
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-indigo-400">Systems Logic</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-indigo-400">Computational Basics</span>
-                <span class="text-xs font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded text-indigo-400">Algorithms</span>
-            </div>
-        </div>
-    </div>
-
-
+    <!-- Script Engines Configuration -->
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
+        /* ==========================================
+           1. THREE.JS 3D INTERACTIVE PARTICLE MATRIX
+           ========================================== */
+        const canvas = document.querySelector('#webgl-bg');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
-            // 1. ENGINE RUNTIME: Anti-Gravity Particle Canvas Simulation
-            const canvas = document.getElementById('particleCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            let particles = [];
-            const particleCount = 65;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 28;
 
-            function resizeCanvas() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+        const count = 200;
+        const positions = new Float32Array(count * 3);
+        const velocities = [];
 
-            class Particle {
-                constructor() {
-                    this.reset();
-                    // Distribute across viewport initially
-                    this.y = Math.random() * canvas.height;
-                }
-                reset() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = canvas.height + 20; // Start below visible screen
-                    this.size = Math.random() * 2 + 0.5;
-                    this.speedY = -(Math.random() * 0.7 + 0.2); // Upward float velocity
-                    this.opacity = Math.random() * 0.5 + 0.2;
-                }
-                update() {
-                    this.y += this.speedY;
-                    if (this.y < -10) {
-                        this.reset();
-                    }
-                }
-                draw() {
-                    ctx.fillStyle = `rgba(6, 182, 212, ${this.opacity})`;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+        for(let i = 0; i < count * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 60;
+            positions[i+1] = (Math.random() - 0.5) * 60;
+            positions[i+2] = (Math.random() - 0.5) * 40;
 
-            // Instantiate simulation elements
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-
-            function animateParticles() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
-                requestAnimationFrame(animateParticles);
-            }
-            animateParticles();
-
-
-            // 2. TIMELINE RENDERING: GSAP Entrance Orchestration
-            // Synchronous staggered cascade for Hero elements
-            gsap.to(".hero-elements", {
-                opacity: 1,
-                y: -10,
-                duration: 1,
-                ease: "power3.out",
-                delay: 0.3
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.025,
+                y: (Math.random() - 0.5) * 0.025,
+                z: (Math.random() - 0.5) * 0.02
             });
+        }
 
-            // Smooth reactive ScrollTrigger alternative for scrolling visibility
-            const checkScrollReveal = () => {
-                const triggerBottom = window.innerHeight * 0.85;
+        const particleGeo = new THREE.BufferGeometry();
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-                // Reveal About Card
-                const aboutCard = document.querySelector('.about-card');
-                if(aboutCard.getBoundingClientRect().top < triggerBottom) {
-                    gsap.to(aboutCard, { opacity: 1, y: 0, duration: 1, ease: "power3.out" });
-                }
+        const makeCircleTexture = () => {
+            const c = document.createElement('canvas');
+            c.width = 16; c.height = 16;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createRadialGradient(8,8,0, 8,8,8);
+            grad.addColorStop(0, 'rgba(0, 255, 204, 1)');
+            grad.addColorStop(0.5, 'rgba(255, 0, 127, 0.5)');
+            grad.addColorStop(1, 'rgba(0, 255, 204, 0)');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,16,16);
+            return new THREE.CanvasTexture(c);
+        };
 
-                // Stagger reveal project list items
-                const projectCards = document.querySelectorAll('.project-card');
-                projectCards.forEach((card, index) => {
-                    if(card.getBoundingClientRect().top < triggerBottom) {
-                        gsap.to(card, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out", delay: index * 0.15 });
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.6,
+            map: makeCircleTexture(),
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const pointCloud = new THREE.Points(particleGeo, particleMat);
+        scene.add(pointCloud);
+
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.09 });
+        let lineMesh = new THREE.LineSegments(new THREE.BufferGeometry(), lineMat);
+        scene.add(lineMesh);
+
+        let pointerX = 0, pointerY = 0;
+        let targetPointerX = 0, targetPointerY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            targetPointerX = (e.clientX / window.innerWidth) * 2 - 1;
+            targetPointerY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        const clock = new THREE.Clock();
+
+        const tick = () => {
+            const elapsedTime = clock.getElapsedTime();
+            const posArr = pointCloud.geometry.attributes.position.array;
+
+            pointerX += (targetPointerX - pointerX) * 0.04;
+            pointerY += (targetPointerY - pointerY) * 0.04;
+
+            pointCloud.rotation.y = elapsedTime * 0.015 + (pointerX * 0.15);
+            pointCloud.rotation.x = elapsedTime * 0.01 + (pointerY * 0.15);
+
+            // Dynamically morph color properties of lines depending on pointer tracking parameters
+            lineMat.color.setHex(pointerX > 0 ? 0x00ffcc : 0xff007f);
+
+            let linePositions = [];
+            for(let i = 0; i < count; i++) {
+                const idx = i * 3;
+                posArr[idx] += velocities[i].x;
+                posArr[idx+1] += velocities[i].y;
+                posArr[idx+2] += velocities[i].z;
+
+                if(Math.abs(posArr[idx]) > 32) velocities[i].x *= -1;
+                if(Math.abs(posArr[idx+1]) > 32) velocities[i].y *= -1;
+                if(Math.abs(posArr[idx+2]) > 22) velocities[i].z *= -1;
+
+                for(let j = i + 1; j < count; j++) {
+                    const jdx = j * 3;
+                    const dist = Math.sqrt(
+                        Math.pow(posArr[idx] - posArr[jdx], 2) +
+                        Math.pow(posArr[idx+1] - posArr[jdx+1], 2) +
+                        Math.pow(posArr[idx+2] - posArr[jdx+2], 2)
+                    );
+                    if(dist < 7.5) {
+                        linePositions.push(posArr[idx], posArr[idx+1], posArr[idx+2]);
+                        linePositions.push(posArr[jdx], posArr[jdx+1], posArr[jdx+2]);
                     }
+                }
+            }
+
+            pointCloud.geometry.attributes.position.needsUpdate = true;
+
+            if(lineMesh) scene.remove(lineMesh);
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            lineMesh = new THREE.LineSegments(lineGeo, lineMat);
+            scene.add(lineMesh);
+
+            renderer.render(scene, camera);
+            window.requestAnimationFrame(tick);
+        };
+        tick();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+
+
+        /* ==========================================
+           2. INTERACTIVE MOUSE TRACKING POINTERS
+           ========================================== */
+        const cursor = document.getElementById('custom-cursor');
+        const dot = document.getElementById('custom-cursor-dot');
+        
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.12 });
+            gsap.to(dot, { x: e.clientX, y: e.clientY, duration: 0.02 });
+        });
+
+        // Expand custom pointer sizing attributes upon valid interface hovering hooks
+        document.querySelectorAll('a, button, input, textarea, .glass-card, #mini-robot').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                cursor.style.width = '44px';
+                cursor.style.height = '44px';
+                cursor.style.borderColor = '#ff007f';
+                cursor.style.boxShadow = '0 0 25px #ff007f';
+                gsap.to(dot, { scale: 1.5, backgroundColor: '#00ffcc' });
+            });
+            item.addEventListener('mouseleave', () => {
+                cursor.style.width = '24px';
+                cursor.style.height = '24px';
+                cursor.style.borderColor = '#00ffcc';
+                cursor.style.boxShadow = '0 0 15px #00ffcc';
+                gsap.to(dot, { scale: 1, backgroundColor: '#ff007f' });
+            });
+        });
+
+
+        /* ==========================================
+           3. TACTILE 3D CARD TILT ENGAGEMENT MATRIX
+           ========================================== */
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const box = card.getBoundingClientRect();
+                const x = e.clientX - box.left - (box.width / 2);
+                const y = e.clientY - box.top - (box.height / 2);
+                
+                gsap.to(card, {
+                    rotateY: x * 0.07,
+                    rotateX: -y * 0.07,
+                    transformOrigin: "center center",
+                    ease: 'power2.out',
+                    duration: 0.4
                 });
-            };
-            window.addEventListener('scroll', checkScrollReveal);
-            checkScrollReveal(); // Initialize layout evaluation instantly
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, { rotateY: 0, rotateX: 0, ease: 'power3.out', duration: 0.7 });
+            });
+        });
 
 
-            // 3. INTERACTIVE KINETICS: 3D Micro-Tilting About Panel
-            const card = document.querySelector('.about-card');
-            if(card) {
-                card.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    
-                    gsap.to(card, {
-                        transformPerspective: 1200,
-                        rotationY: ((x / rect.width) - 0.5) * 5,
-                        rotationX: ((y / rect.height) - 0.5) * -5,
-                        duration: 0.4,
-                        ease: "power2.out"
-                    });
-                });
+        /* ==========================================
+           4. GSAP SCROLL TRIGGER ENTRY CONTROLLER
+           ========================================== */
+        gsap.registerPlugin(ScrollTrigger);
 
-                card.addEventListener('mouseleave', () => {
-                    gsap.to(card, { rotationY: 0, rotationX: 0, duration: 0.8, ease: "power2.out" });
+        gsap.to('.hero-reveal', {
+            y: 0,
+            opacity: 1,
+            duration: 1.2,
+            stagger: 0.25,
+            ease: 'power4.out'
+        });
+
+        document.querySelectorAll('.scroll-reveal').forEach(section => {
+            gsap.to(section, {
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top 88%',
+                    toggleActions: 'play none none none'
+                },
+                y: 0,
+                opacity: 1,
+                duration: 0.9,
+                ease: 'power2.out'
+            });
+        });
+
+        gsap.to('.setup-stagger', {
+            scrollTrigger: {
+                trigger: '#skills-grid',
+                start: 'top 85%'
+            },
+            opacity: 1,
+            duration: 0.4,
+            onStart: () => {
+                gsap.from('#skills-grid .glass-card', {
+                    y: 40,
+                    opacity: 0,
+                    stagger: 0.08,
+                    duration: 0.8,
+                    ease: 'power3.out'
                 });
             }
         });
 
 
-        // 4. TELEMETRY UTILITIES: Modal Interface State Handlers
-        function openPopup(popupId) {
-            const overlay = document.getElementById(popupId);
-            const content = overlay.querySelector('.modal-content');
+        /* ==========================================
+           5. SYSTEM ALERTS AUTOMATED TOAST HUB
+           ========================================== */
+        const defensiveAlertLogs = [
+            "Handshake handshake protocol verified successfully.",
+            "SSL/TLS secure verification certificate structural scan node complete.",
+            "ICS Perimeter validation system reports operational status optimal.",
+            "Local sandbox core memory structures synchronized smoothly.",
+            "AES-256 transmission encryption validation algorithm loaded."
+        ];
+
+        function deployNotificationToast(messageText, isAlert = false) {
+            const hub = document.getElementById('notification-hub');
+            const toast = document.createElement('div');
+            toast.className = `p-3 text-[11px] font-mono rounded-lg border backdrop-blur-md shadow-xl flex items-center gap-2 transition-all duration-300 bg-slate-950/90 ${isAlert ? 'border-pink-500 text-pink-400 shadow-pink-950/20' : 'border-cyan-500/40 text-cyan-400 shadow-cyan-950/20'}`;
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-30px)';
+            toast.innerHTML = `<i class="fa-solid ${isAlert ? 'fa-triangle-exclamation animate-pulse' : 'fa-circle-nodes'}"></i> <span>${messageText}</span>`;
             
-            // Activate pointer events
-            overlay.classList.remove('pointer-events-none');
-            
-            // GSAP Dynamic popup animations
-            gsap.to(overlay, { opacity: 1, duration: 0.3 });
-            gsap.to(content, { scale: 1, duration: 0.4, ease: "back.out(1.5)" });
+            hub.appendChild(toast);
+            gsap.to(toast, { opacity: 1, x: 0, duration: 0.4 });
+
+            setTimeout(() => {
+                gsap.to(toast, {
+                    opacity: 0,
+                    x: -20,
+                    duration: 0.4,
+                    onComplete: () => toast.remove()
+                });
+            }, 4500);
         }
 
-        function closePopup(popupId) {
-            const overlay = document.getElementById(popupId);
-            const content = overlay.querySelector('.modal-content');
+        // Trigger passive automated system checks onto the layout
+        setInterval(() => {
+            const index = Math.floor(Math.random() * defensiveAlertLogs.length);
+            deployNotificationToast(defensiveAlertLogs[index]);
+        }, 9000);
+
+
+        /* ==========================================
+           6. DEFENSIVE ASSISTANT DRONE INTERACTIONS
+           ========================================== */
+        const droneQuotes = [
+            "DRONE: Perimeter Secure.",
+            "DRONE: Port 443 Scanning Complete.",
+            "DRONE: Active Malware Threat Matrix 0%.",
+            "DRONE: ICS Firewall Protection Protocol Active.",
+            "DRONE: Live Data Stream Packets Encrypted.",
+            "DRONE: Core Architecture Acknowledged."
+        ];
+        
+        function interactRobot() {
+            const output = document.getElementById('robot-speech');
+            const icon = document.getElementById('drone-icon');
+            const roll = Math.floor(Math.random() * droneQuotes.length);
+            output.innerText = droneQuotes[roll];
             
-            // Deactivate interactive layer mapping
-            overlay.classList.add('pointer-events-none');
+            deployNotificationToast(`Drone Query Transmitted: ${droneQuotes[roll]}`, true);
             
-            gsap.to(overlay, { opacity: 0, duration: 0.25 });
-            gsap.to(content, { scale: 0.9, duration: 0.25, ease: "power2.in" });
+            gsap.fromTo('#mini-robot', { scale: 0.9 }, { scale: 1, ease: 'elastic.out(1, 0.3)', duration: 0.6 });
+            gsap.fromTo(icon, { rotate: 0 }, { rotate: 360, duration: 0.5 });
+        }
+
+
+        /* ==========================================
+           7. MODULE DIAGNOSTICS POP-UP MECHANISMS
+           ========================================== */
+        function triggerSkillDiagnostic(skillName, initialValue) {
+            const term = document.getElementById('diagnostic-terminal');
+            const stdout = document.getElementById('diagnostic-stdout');
+            
+            term.classList.remove('hidden');
+            gsap.fromTo(term, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+            stdout.innerHTML = '';
+            
+            const logs = [
+                `[INITIALIZE] Syncing target interface system module parameters: ${skillName.toUpperCase()}`,
+                `[FETCH] Testing structural authorization metrics... SYSTEM RESPONSE: APPROVED`,
+                `[AUDIT] Validating system performance configuration nodes... STATUS [100% SECURE]`,
+                `[METRIC] Processing operational throughput performance value: ${initialValue}% load ceiling.`,
+                `[COMPLETE] Module metrics telemetry stream compiled and forwarded to GHANIA.SEC dashboard registry.`
+            ];
+            
+            logs.forEach((line, index) => {
+                setTimeout(() => {
+                    const el = document.createElement('p');
+                    el.className = 'font-mono text-[11px] leading-relaxed';
+                    if (line.includes('INITIALIZE')) el.className += ' text-cyan-400';
+                    else if (line.includes('SECURE')) el.className += ' text-emerald-400 font-bold';
+                    else el.className += ' text-gray-400';
+                    el.innerText = line;
+                    stdout.appendChild(el);
+                    stdout.scrollTop = stdout.scrollHeight;
+                }, index * 200);
+            });
+            deployNotificationToast(`Inspecting Module Diagnostics: ${skillName}`);
+        }
+
+        function closeTerminal() {
+            const term = document.getElementById('diagnostic-terminal');
+            gsap.to(term, { opacity: 0, y: 10, duration: 0.3, onComplete: () => term.classList.add('hidden') });
+        }
+
+
+        /* ==========================================
+           8. EXTRACURRICULAR SANDBOX SIMULATORS
+           ========================================== */
+        function toggleHobbyDetail(type) {
+            const term = document.getElementById('diagnostic-terminal');
+            const stdout = document.getElementById('diagnostic-stdout');
+            
+            term.classList.remove('hidden');
+            gsap.fromTo(term, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+            stdout.innerHTML = '';
+            
+            let outputs = [];
+            if(type === 'ai') {
+                outputs = [
+                    "&gt; python3 -m ai_core_tuner --sandbox",
+                    "Parsing model localized weight distribution files... DONE",
+                    "Assembling cross-validation prompting protection guidelines...",
+                    "Status Check: Isolated evaluation layout processing safely beneath 0.02ms lag latency limits."
+                ];
+                deployNotificationToast("AI Sandbox Matrix Initialized.");
+            } else if (type === 'design') {
+                outputs = [
+                    "&gt; vec_engine --generate --asset=branding_mesh",
+                    "Computing structural non-rational B-spline math equations...",
+                    "Processing component coordinates via rendering vectors...",
+                    "Success Vector: Asset produced with true loss-free modular scaling properties."
+                ];
+                deployNotificationToast("Vector Mesh Generated Successfully.");
+            } else {
+                outputs = [
+                    "&gt; systemctl status defense_perimeter_labs.service",
+                    "● perimeter_labs.service - Sandbox Network Pathing Security Simulation Protocol",
+                    "   Active state: active (running) safely inside local terminal session",
+                    "   Alert Core status: zero data disclosure indicators recorded across layout pathing matrices."
+                ];
+                deployNotificationToast("Firewall Simulator Scan: Clear.", true);
+            }
+            
+            outputs.forEach((line, index) => {
+                setTimeout(() => {
+                    const el = document.createElement('p');
+                    el.className = 'font-mono text-[11px] text-gray-300';
+                    el.innerHTML = line;
+                    stdout.appendChild(el);
+                    stdout.scrollTop = stdout.scrollHeight;
+                }, index * 180);
+            });
+        }
+
+
+        /* ==========================================
+           9. INQUIRE COMMUNICATIONS SYSTEM DISPATCH
+           ========================================== */
+        function handleInquirySubmission(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('inquire-name').value;
+            const email = document.getElementById('inquire-email').value;
+            
+            const displayBox = document.getElementById('terminal-output');
+            displayBox.classList.remove('hidden');
+            displayBox.innerHTML = '';
+            
+            const pipeline = [
+                `Establishing active socket connection link to GHANIA.SEC core node...`,
+                `Encoding transaction payload data fields with local handshake architecture keys...`,
+                `[TRANSMIT] Dispatching inquiry block array from origin: [${email}]...`,
+                `[SUCCESS] Communications payload locked into secure storage cache! Verification completed. Thank you, ${name}.`
+            ];
+            
+            pipeline.forEach((step, idx) => {
+                setTimeout(() => {
+                    const line = document.createElement('p');
+                    line.className = step.includes('SUCCESS') ? 'text-emerald-400 font-bold animate-pulse' : 'text-cyan-400';
+                    line.innerText = `&gt; ${step}`;
+                    displayBox.appendChild(line);
+                    displayBox.scrollTop = displayBox.scrollHeight;
+                    
+                    if(idx === pipeline.length - 1) {
+                        document.getElementById('terminal-form').reset();
+                        document.getElementById('form-status-msg').innerText = "DATA DISPATCH VERIFIED successfully.";
+                        deployNotificationToast("Message Transmitted to Central Hub", true);
+                    }
+                }, idx * 450);
+            });
         }
     </script>
 </body>
